@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zen Escape - Assistente</title>
+    <style>
+        :root {
+            color-scheme: light;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: white;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2d5016 0%, #4a7c3f 100%);
+            color: white;
+            padding: 16px 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .language-selector {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .lang-btn {
+            padding: 5px 10px;
+            border: 1.5px solid white;
+            background: transparent;
+            color: white;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .lang-btn.active {
+            background: white;
+            color: #2d5016;
+        }
+
+        .lang-btn:hover {
+            opacity: 0.9;
+        }
+
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #fafafa;
+        }
+
+        .message {
+            display: flex;
+            gap: 8px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-bubble {
+            max-width: 80%;
+            padding: 12px 15px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .message.bot .message-bubble {
+            background: #e8f0e6;
+            color: #1a1a1a;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.user .message-bubble {
+            background: #2d5016;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .thinking {
+            display: flex;
+            gap: 4px;
+            padding: 10px 14px;
+        }
+
+        .thinking span {
+            width: 6px;
+            height: 6px;
+            background: #2d5016;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+
+        .thinking span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .thinking span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                opacity: 0.4;
+                transform: translateY(0);
+            }
+            40% {
+                opacity: 1;
+                transform: translateY(-6px);
+            }
+        }
+
+        .input-area {
+            padding: 16px 20px;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .input-area input {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 10px 14px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .input-area input:focus {
+            border-color: #2d5016;
+            box-shadow: 0 0 0 2px rgba(45, 80, 22, 0.1);
+        }
+
+        .input-area button {
+            background: #2d5016;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .input-area button:hover {
+            background: #4a7c3f;
+            transform: scale(1.05);
+        }
+
+        .input-area button:active {
+            transform: scale(0.95);
+        }
+
+        .input-area button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 18px;
+            }
+
+            .message-bubble {
+                max-width: 90%;
+            }
+
+            .language-selector {
+                gap: 6px;
+            }
+
+            .lang-btn {
+                padding: 4px 8px;
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌿 Zen Escape</h1>
+            <div class="language-selector">
+                <button class="lang-btn active" data-lang="it">Italiano</button>
+                <button class="lang-btn" data-lang="en">English</button>
+                <button class="lang-btn" data-lang="fr">Français</button>
+                <button class="lang-btn" data-lang="de">Deutsch</button>
+            </div>
+        </div>
+
+        <div class="chat-area" id="chatArea"></div>
+
+        <div class="input-area">
+            <div class="input-wrapper">
+                <input
+                    type="text"
+                    id="userInput"
+                    placeholder="Fai una domanda..."
+                    autocomplete="off"
+                >
+                <button id="sendBtn">📤</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatArea = document.getElementById('chatArea');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const langBtns = document.querySelectorAll('.lang-btn');
+
+        let currentLanguage = 'it';
+        let isWaitingForResponse = false;
+
+        // FAQ Database
+        const faqDatabase = {
+            it: [
+                {
+                    q: ['check-in', 'orario arrivo', 'quando posso arrivare', 'che ora'],
+                    a: 'Il check-in è dalle 13:00 in poi. Se hai esigenze particolari, contattaci pure — facciamo il possibile per venirvi incontro!'
+                },
+                {
+                    q: ['check-out', 'partenza', 'quando devo partire', 'orario'],
+                    a: 'Il checkout è entro le 12:00. Se hai esigenze particolari, contattaci — siamo flessibili!'
+                },
+                {
+                    q: ['parcheggio', 'auto', 'dove parcheggio', 'macchina', 'car park'],
+                    a: 'Ci sono due parcheggi nel paese:\n\n1. Parcheggio principale: accanto al ristorante, subito all\'arrivo\n2. Belvedere: se il primo è pieno, segui l\'unica strada che sale e dopo ~200m imbocca la prima a destra\n\nDa lì: 200 metri a piedi (3 minuti) lungo un percorso panoramico nel borgo.'
+                },
+                {
+                    q: ['cosa c\'è in casa', 'cucina', 'colazione', 'latte', 'caffè', 'cosa trovo'],
+                    a: 'La cucina è completamente attrezzata con:\n• Pentole, stoviglie, olio, aceto, sale, pepe, spezie\n• Thè, camomille, tisane, caffè (capsule/cialde/moka)\n• Bollitore, tostapane, microonde\n\nIl primo giorno troverai già: latte, fette biscottate, marmellate, pane.\n\nNon ci sono supermarket nelle vicinanze, quindi tutto l\'essenziale è già in casa!'
+                },
+                {
+                    q: ['sentiero', 'escursione', '1 ora', 'cane', 'trekking', 'camminata'],
+                    a: 'Ecco i sentieri disponibili:\n\n🥾 Anello Breve Sillico - Facile, 45min-1ora\nMagnifiche vedute sulla valle e Alpi Apuane. Castagneti e vigneti terrazzati. Perfetto per 1 ora!\n\n🥾 Sentiero Castagneti - Facile, 1 ora\nCastagneti e metati tradizionali. Ideale per una passeggiata tranquilla.\n\n🥾 Sentiero Capraia - Media, 1,5-2 ore\nEremo di Capraia con viste spettacolari. Salita attraverso prati.\n\n🥾 Sentiero Bargecchia - Facile, 1-1,5 ore\nPiccolo villaggio immerso nel bosco.\n\nTutti i sentieri sono adatti ai cani! 🐕'
+                },
+                {
+                    q: ['cosa fare', 'attività', 'cosa c\'è', 'sillico', 'visitare', 'cosa vedere'],
+                    a: 'Sillico offre molte opportunità:\n• Ricca rete di sentieri nel bosco circostante\n• Trekking di varie difficoltà\n• Al tramonto: scenario mozzafiato sulle Alpi Apuane\n• Silenzio assoluto e profondo la sera\n\nPer scoprire attività, eventi e cosa fare a Sillico, visita: https://www.sillicodascoprire.it/'
+                },
+                {
+                    q: ['struttura', 'camere', 'stanze', 'come è la casa', 'descrivimi'],
+                    a: 'Zen Escape è una casa storica del 1670 nel borgo medievale di Sillico:\n\n📍 Piano terra: cucina completamente attrezzata + soggiorno con divano letto, tavolo e TV\n\n📍 Primo piano: camera matrimoniale con scrivania, ampio armadio, balcone privato + bagno completo\n\nInterni minimalisti ed essenziali. All\'esterno: gazebi, capanna per meditazione, viste sulle Alpi Apuane.'
+                },
+                {
+                    q: ['accesso', 'come arrivo', 'auto', 'accessibile', 'strada'],
+                    a: 'La proprietà è dentro il borgo medievale e NON è accessibile direttamente in auto.\n\nIl parcheggio dista ~200 metri (3 minuti a piedi) lungo un percorso panoramico nel borgo.\n\nQuesto mantiene la pace e la serenità del luogo! 🌿'
+                },
+                {
+                    q: ['wifi', 'internet', 'connessione', 'rete'],
+                    a: 'Contattaci direttamente per informazioni sulla connessione internet. Siamo qui per aiutarti!'
+                }
+            ],
+            en: [
+                {
+                    q: ['check-in', 'arrival', 'what time', 'when can i'],
+                    a: 'Check-in is from 1:00 PM onwards. If you have special needs, just ask — we\'ll do our best to accommodate you!'
+                },
+                {
+                    q: ['check-out', 'departure', 'when leave', 'time'],
+                    a: 'Checkout is by 12:00 PM. If you need something special, let us know — we\'re flexible!'
+                },
+                {
+                    q: ['parking', 'car', 'where park', 'automobile'],
+                    a: 'There are two parking areas in the village:\n\n1. Main parking: next to the restaurant, right when you arrive\n2. Belvedere: if the first is full, follow the only road that climbs and after ~200m take the first right\n\nFrom there: 200 meters on foot (3 minutes) along a scenic route through the village.'
+                },
+                {
+                    q: ['what\'s in house', 'kitchen', 'breakfast', 'milk', 'coffee'],
+                    a: 'The kitchen is fully equipped with:\n• Pots, dishes, oil, vinegar, salt, pepper, spices\n• Tea, chamomile, herbal infusions, coffee (capsules/pods/moka)\n• Kettle, toaster, microwave\n\nFirst day: milk, biscuits, jams, bread already provided.\n\nNo supermarkets nearby, so everything essential is already here!'
+                },
+                {
+                    q: ['trail', 'hike', '1 hour', 'dog', 'trekking', 'walk'],
+                    a: 'Available trails:\n\n🥾 Sillico Short Loop - Easy, 45min-1hour\nMagnificent views over valley and Apuan Alps. Chestnut groves and terraced vineyards. Perfect for 1 hour!\n\n🥾 Chestnut Grove Trail - Easy, 1 hour\nChestnut groves and traditional metati. Ideal for a peaceful walk.\n\n🥾 Capraia Trail - Medium, 1.5-2 hours\nCapraia Hermitage with spectacular views. Climb through meadows.\n\n🥾 Bargecchia Trail - Easy, 1-1.5 hours\nTiny village nestled in the forest.\n\nAll trails are dog-friendly! 🐕'
+                },
+                {
+                    q: ['what to do', 'activities', 'visit', 'see', 'things to do'],
+                    a: 'Sillico offers plenty:\n• Rich network of forest trails\n• Trekking of varying difficulty\n• Sunset: breathtaking view over Apuan Alps\n• Evening: absolute, deep silence\n\nTo discover activities, events and things to do in Sillico: https://www.sillicodascoprire.it/'
+                },
+                {
+                    q: ['property', 'rooms', 'describe', 'house', 'accommodations'],
+                    a: 'Zen Escape is a historic 1670 house in the medieval village of Sillico:\n\n📍 Ground floor: fully equipped kitchen + living room with sofa bed, table and TV\n\n📍 First floor: spacious double bedroom with desk, large wardrobe, private balcony + full bathroom\n\nMinimalist, essential interiors. Outside: gazebos, meditation hut, views of Apuan Alps.'
+                },
+                {
+                    q: ['access', 'how to get', 'car', 'road', 'reach'],
+                    a: 'The property is inside the medieval village and is NOT directly accessible by car.\n\nParking is ~200 meters away (3 minutes on foot) along a scenic route through the village.\n\nThis helps maintain the peace and serenity of the place! 🌿'
+                },
+                {
+                    q: ['wifi', 'internet', 'connection', 'network'],
+                    a: 'Please contact us for information about internet connection. We\'re here to help!'
+                }
+            ],
+            fr: [
+                {
+                    q: ['arrivée', 'quelle heure', 'quand', 'check-in'],
+                    a: 'L\'arrivée se fait à partir de 13h00. Si vous avez des besoins particuliers, contactez-nous — nous ferons notre possible!'
+                },
+                {
+                    q: ['départ', 'checkout', 'heure', 'quitter'],
+                    a: 'Le départ se fait avant 12h00. Si vous avez besoin de quelque chose, dites-le-nous — nous sommes flexibles!'
+                },
+                {
+                    q: ['parking', 'voiture', 'où garer', 'automobile'],
+                    a: 'Il y a deux zones de stationnement au village:\n\n1. Parking principal: à côté du restaurant, dès votre arrivée\n2. Belvedere: si le premier est plein, suivez la seule route qui monte et après ~200m prenez la première à droite\n\nDe là: 200 mètres à pied (3 minutes) le long d\'une route pittoresque.'
+                },
+                {
+                    q: ['maison', 'cuisine', 'petit-déjeuner', 'lait', 'café'],
+                    a: 'La cuisine est complètement équipée:\n• Casseroles, vaisselle, huile, vinaigre, sel, poivre, épices\n• Thé, camomille, infusions, café (capsules/dosettes/moka)\n• Bouilloire, grille-pain, micro-ondes\n\nPremier jour: lait, biscuits, confitures, pain déjà fournis.\n\nPas de supermarchés à proximité, donc l\'essentiel est déjà présent!'
+                },
+                {
+                    q: ['sentier', 'randonnée', 'heure', 'chien', 'trekking', 'promenade'],
+                    a: 'Sentiers disponibles:\n\n🥾 Petite Boucle Sillico - Facile, 45min-1h\nVues magnifiques sur la vallée et les Alpes Apuanes. Châtaigneraies et vignobles. Parfait pour 1 heure!\n\n🥾 Sentier Châtaigneraie - Facile, 1 heure\nChâtaigneraies et metati traditionnels. Idéal pour une promenade tranquille.\n\n🥾 Sentier Capraia - Moyen, 1,5-2 heures\nErmitage de Capraia avec vues spectaculaires. Montée à travers les prés.\n\n🥾 Sentier Bargecchia - Facile, 1-1,5 heures\nPetit village dans la forêt.\n\nTous les sentiers sont adaptés aux chiens! 🐕'
+                },
+                {
+                    q: ['faire', 'activités', 'visiter', 'voir', 'choses'],
+                    a: 'Sillico offre beaucoup:\n• Riche réseau de sentiers forestiers\n• Trekking de difficulté variable\n• Coucher de soleil: vue époustouflante sur les Alpes Apuanes\n• Soir: silence absolu et profond\n\nPour découvrir activités et choses à faire: https://www.sillicodascoprire.it/'
+                },
+                {
+                    q: ['propriété', 'chambres', 'décrire', 'maison'],
+                    a: 'Zen Escape est une maison historique de 1670 au cœur du village médiéval de Sillico:\n\n📍 Rez-de-chaussée: cuisine entièrement équipée + séjour avec canapé-lit, table et TV\n\n📍 Premier étage: chambre double spacieuse avec bureau, grand placard, balcon privé + salle de bain complète\n\nIntérieurs minimalistes. Extérieur: tonnelles, cabane de méditation, vues sur les Alpes.'
+                },
+                {
+                    q: ['accès', 'arriver', 'voiture', 'route'],
+                    a: 'La propriété se trouve dans le village médiéval et n\'est PAS directement accessible en voiture.\n\nLe parking est à ~200 mètres (3 minutes à pied) le long d\'une route pittoresque.\n\nCela maintient la paix et la sérénité des lieux! 🌿'
+                }
+            ],
+            de: [
+                {
+                    q: ['ankunft', 'uhrzeit', 'wann', 'check-in'],
+                    a: 'Ankunft ab 13:00 Uhr. Wenn Sie spezielle Wünsche haben, sagen Sie Bescheid — wir tun unser Bestes!'
+                },
+                {
+                    q: ['abreise', 'checkout', 'zeit', 'verlassen'],
+                    a: 'Abreise bis 12:00 Uhr. Bei besonderen Wünschen sagen Sie uns Bescheid — wir sind flexibel!'
+                },
+                {
+                    q: ['parkplatz', 'auto', 'wo parken', 'fahrzeug'],
+                    a: 'Es gibt zwei Parkplätze im Dorf:\n\n1. Hauptparkplatz: neben dem Restaurant, direkt bei Ankunft\n2. Belvedere: falls voll, folgen Sie der einzigen aufwärts führenden Straße und biegen Sie nach ~200m rechts ab\n\nVon dort: 200 Meter zu Fuß (3 Minuten) entlang einer malerischen Route.'
+                },
+                {
+                    q: ['haus', 'küche', 'frühstück', 'milch', 'kaffee'],
+                    a: 'Die Küche ist vollständig ausgestattet:\n• Töpfe, Geschirr, Öl, Essig, Salz, Pfeffer, Gewürze\n• Tee, Kamille, Kräutertees, Kaffee (Kapseln/Pads/Moka)\n• Wasserkocher, Toaster, Mikrowelle\n\nErster Tag: Milch, Kekse, Marmelade, Brot schon vorhanden.\n\nKeine Supermärkte in der Nähe, also alles Wichtige ist bereits im Haus!'
+                },
+                {
+                    q: ['weg', 'wanderung', 'stunde', 'hund', 'trekking', 'spaziergang'],
+                    a: 'Verfügbare Wanderwege:\n\n🥾 Sillico Rundweg - Einfach, 45min-1h\nHerrliche Ausblicke auf das Tal und die Apuanischen Alpen. Kastanienhaine und Terrassenweinberge. Perfekt für 1 Stunde!\n\n🥾 Kastanienhain-Weg - Einfach, 1 Stunde\nKastanienhaine und traditionelle Metati. Ideal für einen ruhigen Spaziergang.\n\n🥾 Capraia-Weg - Mittel, 1,5-2 Stunden\nCapraia-Eremitage mit spektakulären Aussichten. Aufstieg durch Wiesen.\n\n🥾 Bargecchia-Weg - Einfach, 1-1,5 Stunden\nKleines Dorf im Wald.\n\nAlle Wege sind hundefreundlich! 🐕'
+                },
+                {
+                    q: ['aktivitäten', 'besuchen', 'sehen', 'dinge'],
+                    a: 'Sillico bietet viel:\n• Reiches Netz von Waldwegen\n• Trekking verschiedener Schwierigkeit\n• Sonnenuntergang: atemberaubender Blick auf Apuanische Alpen\n• Abend: absolute, tiefe Ruhe\n\nFür Aktivitäten in Sillico: https://www.sillicodascoprire.it/'
+                },
+                {
+                    q: ['grundstück', 'zimmer', 'beschreiben', 'haus'],
+                    a: 'Zen Escape ist ein historisches Haus aus 1670 im Herzen des Dorfes Sillico:\n\n📍 Erdgeschoss: vollständig ausgestattete Küche + Wohnzimmer mit Schlafsofa, Tisch und TV\n\n📍 Erste Etage: geräumiges Doppelzimmer mit Schreibtisch, großem Kleiderschrank, privatem Balkon + vollständigem Badezimmer\n\nMinimalistische Innenräume. Außen: Pavillons, Meditationshütte, Aussicht auf Alpen.'
+                },
+                {
+                    q: ['zugang', 'anreise', 'auto', 'straße'],
+                    a: 'Das Grundstück liegt im Dorf und ist NICHT direkt mit dem Auto erreichbar.\n\nDer Parkplatz ist ~200 Meter entfernt (3 Minuten zu Fuß) entlang einer malerischen Route.\n\nDas trägt zum Frieden und zur Ruhe des Ortes bei! 🌿'
+                }
+            ]
+        };
+
+        const greetings = {
+            it: 'Ciao! 👋 Benvenuto a Zen Escape. Fai pure le tue domande sulla struttura, check-in/checkout, parcheggio, sentieri, o quello che vuoi sapere!',
+            en: 'Hi! 👋 Welcome to Zen Escape. Feel free to ask about the property, check-in/checkout, parking, trails, or anything else!',
+            fr: 'Bonjour! 👋 Bienvenue à Zen Escape. Posez vos questions sur la propriété, l\'arrivée/départ, le parking, les sentiers, ou autre!',
+            de: 'Hallo! 👋 Willkommen bei Zen Escape. Stellen Sie Fragen zur Unterkunft, An-/Abreise, Parkplatz, Wanderwegen oder anderem!'
+        };
+
+        function init() {
+            addMessage('bot', greetings[currentLanguage]);
+        }
+
+        langBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                langBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentLanguage = btn.dataset.lang;
+                userInput.placeholder = {
+                    it: 'Fai una domanda...',
+                    en: 'Ask a question...',
+                    fr: 'Posez une question...',
+                    de: 'Stellen Sie eine Frage...'
+                }[currentLanguage];
+                chatArea.innerHTML = '';
+                init();
+            });
+        });
+
+        function findAnswer(question) {
+            const faqs = faqDatabase[currentLanguage];
+            const q = question.toLowerCase();
+
+            for (let faq of faqs) {
+                for (let keyword of faq.q) {
+                    if (q.includes(keyword)) {
+                        return faq.a;
+                    }
+                }
+            }
+
+            const notFound = {
+                it: 'Non sono sicuro di capire la domanda. Puoi riprovare con altre parole? 😊',
+                en: 'I\'m not sure I understand. Could you rephrase? 😊',
+                fr: 'Je ne suis pas sûr de comprendre. Peux-tu reformuler? 😊',
+                de: 'Ich bin mir nicht sicher. Könntest du umformulieren? 😊'
+            };
+
+            return notFound[currentLanguage];
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message || isWaitingForResponse) return;
+
+            addMessage('user', message);
+            userInput.value = '';
+            sendBtn.disabled = true;
+            isWaitingForResponse = true;
+
+            const thinkingId = addThinking();
+
+            setTimeout(() => {
+                const thinkingEl = document.getElementById(thinkingId);
+                if (thinkingEl) thinkingEl.remove();
+
+                const response = findAnswer(message);
+                addMessage('bot', response);
+
+                sendBtn.disabled = false;
+                isWaitingForResponse = false;
+                userInput.focus();
+            }, 600);
+        }
+
+        function addMessage(sender, text) {
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${sender}`;
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.textContent = text;
+            messageEl.appendChild(bubble);
+            chatArea.appendChild(messageEl);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function addThinking() {
+            const id = 'thinking-' + Date.now();
+            const messageEl = document.createElement('div');
+            messageEl.id = id;
+            messageEl.className = 'message bot';
+            messageEl.innerHTML = '<div class="thinking"><span></span><span></span><span></span></div>';
+            chatArea.appendChild(messageEl);
+            chatArea.scrollTop = chatArea.scrollHeight;
+            return id;
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !isWaitingForResponse) sendMessage();
+        });
+
+        init();
+    </script>
+</body>
+</html>
